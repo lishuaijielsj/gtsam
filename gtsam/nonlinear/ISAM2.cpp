@@ -659,23 +659,30 @@ void ISAM2::marginalizeLeaves(
   // data structures
 
   // Gather factors to add - the new marginal factors
+  NonlinearFactorGraph marginalFactorsToAdd;
   GaussianFactorGraph factorsToAdd;
   for (const auto& key_factors : marginalFactors) {
     for (const auto& factor : key_factors.second) {
       if (factor) {
         factorsToAdd.push_back(factor);
-        if (marginalFactorsIndices)
-          marginalFactorsIndices->push_back(nonlinearFactors_.size());
-        nonlinearFactors_.push_back(
-            boost::make_shared<LinearContainerFactor>(factor));
-        if (params_.cacheLinearizedFactors) linearFactors_.push_back(factor);
+        // if (marginalFactorsIndices)
+          // marginalFactorsIndices->push_back(nonlinearFactors_.size());
+        // nonlinearFactors_.push_back(
+        //    boost::make_shared<LinearContainerFactor>(factor));
+        marginalFactorsToAdd.emplace_shared<LinearContainerFactor>(factor);
+        // if (params_.cacheLinearizedFactors) linearFactors_.push_back(factor);
         for (Key factorKey : *factor) {
           fixedVariables_.insert(factorKey);
         }
       }
     }
   }
-  variableIndex_.augment(factorsToAdd);  // Augment the variable index
+
+  auto indices = nonlinearFactors_.add_factors(marginalFactorsToAdd, params_.findUnusedFactorSlots);
+  variableIndex_.augment(factorsToAdd, indices);  // Augment the variable index
+  if (marginalFactorsIndices)
+    marginalFactorsIndices->insert(marginalFactorsIndices->end(), indices.begin(), indices.end());
+  if (params_.cacheLinearizedFactors) linearFactors_.add_factors(factorsToAdd, params_.findUnusedFactorSlots);
 
   // Remove the factors to remove that have been summarized in the newly-added
   // marginal factors
