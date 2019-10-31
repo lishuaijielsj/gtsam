@@ -808,6 +808,9 @@ TEST(ISAM2, marginalCovariance)
   EXPECT(assert_equal(expected, actual));
 }
 
+// write new tests with "findUnusedSlot" on and off
+// 1. check variable index
+
 /* ************************************************************************* */
 TEST(ISAM2, calculate_nnz)
 {
